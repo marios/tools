@@ -1,0 +1,16 @@
+---
+    name: 'upgrade_non_controller'
+    runner_type: 'remote-shell-cmd'
+    description: 'run the /root/tripleo_upgrade_node.sh script on the specified node'
+    enabled: true
+    entry_point: ''
+    parameters:
+        hosts:
+            required: true
+        username:
+            default: 'heat-admin'
+        sudo:
+            default: true
+        cmd:
+            immutable: true
+            default: '/bin/bash /root/tripleo-upgrade-node.sh'

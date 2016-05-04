@@ -1,0 +1,38 @@
+---
+version: '2.0'
+
+upgrade_non_controllers:
+  input:
+    - private_key_filename
+    - vm_ids: null
+    - username: heat-admin
+    - name_pattern
+
+  tasks:
+
+    get_vm:
+      action: nova.servers_list
+      publish:
+        vm_ids: <% task(get_vms).result.select({ids => $.name.get(  }).id %>
+      keep-result: false
+      on-success:
+        - get_hosts
+
+    get_hosts:
+      with-items: id in <% $.vm_ids %>
+      action: nova.servers_get server=<% $.id %>
+      publish:
+        hosts: <% task(get_hosts).result.select({ip => $.addresses.get($.addresses.keys().first()).where($.get("OS-EXT-IPS:type") = fixed).first().addr}).ip %>
+      keep-result: false
+      on-success:
+        - upgrade_non_controller
+
+    upgrade_non_controller: # Works for ubuntu
+      with-items: host in <% $.hosts %>
+      action: std.ssh_proxied
+      input:
+        host: <% $.host %>
+        private_key_filename: <% $.private_key_filename %>
+        username: <% $.username %>
+        cmd: "sudo /bin/bash /root/tripleo-upgrade-node.sh"
+
