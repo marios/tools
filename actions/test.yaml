@@ -1,19 +1,19 @@
 ---
 version: '2.0'
 
-run_pcs_status:
+overcloud_shell:
   input:
     - private_key_filename: "id_rsa"
     - vm_ids: null
     - username: "heat-admin"
     - cmd: "ifconfig"
-    - name: ""
+    - match_names: "overcloud-controller-0"
 
   tasks:
     get_vm_ids:
       action: nova.servers_list
       publish:
-        vm_ids: <% task(get_vm_ids).result.where($.name = "overcloud-controller-0").select($.id) %>
+        vm_ids: <% task(get_vm_ids).result.where($.name = "$.match_names").select($.id) %>
       keep-result: false
       on-success:
         - get_hosts
@@ -25,9 +25,9 @@ run_pcs_status:
         hosts: <% task(get_hosts).result.select({ip => $.addresses.get($.addresses.keys().first()).where($.get("OS-EXT-IPS:type") = fixed).first().addr}).ip %>
       keep-result: false
       on-success:
-        - upgrade_vm
+        - run_command
 
-    upgrade_vm:
+    run_command:
       with-items: host in <% $.hosts %>
       action: std.ssh
       input:
@@ -35,3 +35,4 @@ run_pcs_status:
         private_key_filename: <% $.private_key_filename %>
         username: <% $.username %>
         cmd: "echo `hostname` && <% $.cmd %>"
+
