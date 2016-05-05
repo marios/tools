@@ -27,7 +27,7 @@ run_pcs_status:
       on-success:
         - upgrade_vm
 
-    upgrade_vm: # Works for ubuntu
+    upgrade_vm:
       with-items: host in <% $.hosts %>
       action: std.ssh
       input:
