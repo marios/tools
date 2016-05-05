@@ -1,19 +1,19 @@
 ---
 version: '2.0'
 
-upgrade_non_controllers:
+run_pcs_status:
   input:
-    - private_key_filename
+    - private_key_filename: "id_rsa"
     - vm_ids: null
-    - username: heat-admin
-    - name_pattern
+    - username: "heat-admin"
+    - cmd: "ifconfig"
+    - name: ""
 
   tasks:
-
-    get_vm:
+    get_vm_ids:
       action: nova.servers_list
       publish:
-        vm_ids: <% task(get_vms).result.select({ids => $.name.get(  }).id %>
+        vm_ids: <% task(get_vm_ids).result.where($.name = "overcloud-controller-0").select($.id) %>
       keep-result: false
       on-success:
         - get_hosts
@@ -25,14 +25,13 @@ upgrade_non_controllers:
         hosts: <% task(get_hosts).result.select({ip => $.addresses.get($.addresses.keys().first()).where($.get("OS-EXT-IPS:type") = fixed).first().addr}).ip %>
       keep-result: false
       on-success:
-        - upgrade_non_controller
+        - upgrade_vm
 
-    upgrade_non_controller: # Works for ubuntu
+    upgrade_vm: # Works for ubuntu
       with-items: host in <% $.hosts %>
-      action: std.ssh_proxied
+      action: std.ssh
       input:
         host: <% $.host %>
         private_key_filename: <% $.private_key_filename %>
         username: <% $.username %>
-        cmd: "sudo /bin/bash /root/tripleo-upgrade-node.sh"
-
+        cmd: "echo `hostname` && <% $.cmd %>"
