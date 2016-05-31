@@ -12,7 +12,7 @@ echo "copying images"
 sudo rm -rf /home/vm_storage_pool/baremetalbrbm_*
 sudo cp /home/VANILLA_UNDERCLOUD/baremetalbrbm_* /home/vm_storage_pool/
 sudo rm -rf /var/lib/libvirt/images/instack.qcow2
-sudo cp /home/VANILLA_UNDERCLOUD/instack.qcow2.bigger.nodes /var/lib/libvirt/images/instack.qcow2
+sudo cp /home/VANILLA_UNDERCLOUD/instack.qcow2 /var/lib/libvirt/images/instack.qcow2
 echo "starting the undercloud"
 virsh start instack
 virsh list
