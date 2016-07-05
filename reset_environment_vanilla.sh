@@ -1,5 +1,10 @@
 #!/bin/bash
 
+directory=$1
+if [[ -z $directory ]]; then
+        echo "gimme the root dir"
+        exit 1
+fi
 echo "ARE YOU SURE!?"
 read sure
 if [[ $sure != "awoo" ]]; then
@@ -10,9 +15,9 @@ for i in $(virsh list | grep -v "Id" | awk '{print $2}'); do virsh destroy $i; d
 virsh list --all
 echo "copying images"
 sudo rm -rf /home/vm_storage_pool/baremetalbrbm_*
-sudo cp /home/VANILLA_UNDERCLOUD/baremetalbrbm_* /home/vm_storage_pool/
+sudo cp /home/$directory/baremetalbrbm_* /home/vm_storage_pool/
 sudo rm -rf /var/lib/libvirt/images/instack.qcow2
-sudo cp /home/VANILLA_UNDERCLOUD/instack.qcow2 /var/lib/libvirt/images/instack.qcow2
+sudo cp /home/$directory/instack.qcow2 /var/lib/libvirt/images/instack.qcow2
 echo "starting the undercloud"
 virsh start instack
 virsh list
