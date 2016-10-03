@@ -1,0 +1,247 @@
+Testing diff: sudo yum remove -y openstack-tripleo-heat-templates && sudo rm -rf /usr/share/openstack-tripleo-heat-templates/ && sudo yum install -y openstack-tripleo-heat-templates instack-undercloud openstack-tripleo-common python-tripleoclient
+And : sudo patch -p1 -d /usr/share/openstack-tripleo-heat-templates/ < /tmp/patch.diff
+diff --git a/extraconfig/tasks/major_upgrade_block_storage.sh b/extraconfig/tasks/major_upgrade_block_storage.sh
+index 0766624..71887e1 100644
+--- a/extraconfig/tasks/major_upgrade_block_storage.sh
++++ b/extraconfig/tasks/major_upgrade_block_storage.sh
+@@ -5,4 +5,6 @@
+ set -eu
+
+ yum -y install python-zaqarclient  # needed for os-collect-config
++yum -y install yum-plugin-versionlock
++yum versionlock openvswitch
+ yum -y -q update
+diff --git a/extraconfig/tasks/major_upgrade_ceph_storage.sh b/extraconfig/tasks/major_upgrade_ceph_storage.sh
+index de42b16..d934b36 100644
+--- a/extraconfig/tasks/major_upgrade_ceph_storage.sh
++++ b/extraconfig/tasks/major_upgrade_ceph_storage.sh
+@@ -23,5 +23,7 @@ ceph osd set noout
+
+ systemctl_ceph stop
+ yum -y install python-zaqarclient  # needed for os-collect-config
++yum -y install yum-plugin-versionlock
++yum versionlock openvswitch
+ yum -y update
+ systemctl_ceph start
+diff --git a/extraconfig/tasks/major_upgrade_compute.sh b/extraconfig/tasks/major_upgrade_compute.sh
+index 78628c8..9e25316 100644
+--- a/extraconfig/tasks/major_upgrade_compute.sh
++++ b/extraconfig/tasks/major_upgrade_compute.sh
+@@ -17,6 +17,8 @@ cat > $UPGRADE_SCRIPT << ENDOFCAT
+ crudini  --set /etc/nova/nova.conf upgrade_levels compute $upgrade_level_nova_compute
+
+ yum -y install python-zaqarclient  # needed for os-collect-config
++yum -y install yum-plugin-versionlock
++yum versionlock openvswitch
+ yum -y update
+
+ ENDOFCAT
+diff --git a/extraconfig/tasks/major_upgrade_controller_pacemaker_1.sh b/extraconfig/tasks/major_upgrade_controller_pacemaker_1.sh
+index 36d8544..1819980 100755
+--- a/extraconfig/tasks/major_upgrade_controller_pacemaker_1.sh
++++ b/extraconfig/tasks/major_upgrade_controller_pacemaker_1.sh
+@@ -1,5 +1,5 @@
+ #!/bin/bash
+
+-set -eu
++set -eux
+
+ cluster_sync_timeout=1800
+@@ -143,6 +86,8 @@ if [ $DO_MYSQL_UPGRADE -eq 1 ]; then
+ fi
+
+ yum -y install python-zaqarclient  # needed for os-collect-config
++yum -y install yum-plugin-versionlock
++yum versionlock openvswitch
+ yum -y -q update
+
+ # We need to ensure at least those two configuration settings, otherwise
+diff --git a/extraconfig/tasks/major_upgrade_controller_pacemaker_2.sh b/extraconfig/tasks/major_upgrade_controller_pacemaker_2.sh
+index 643ae57..d315b29 100755
+--- a/extraconfig/tasks/major_upgrade_controller_pacemaker_2.sh
++++ b/extraconfig/tasks/major_upgrade_controller_pacemaker_2.sh
+@@ -1,6 +1,6 @@
+ #!/bin/bash
+
+-set -eu
++set -eux
+
+ cluster_form_timeout=600
+ cluster_settle_timeout=600
+diff --git a/extraconfig/tasks/major_upgrade_object_storage.sh b/extraconfig/tasks/major_upgrade_object_storage.sh
+index 931f4f4..ec1e779 100644
+--- a/extraconfig/tasks/major_upgrade_object_storage.sh
++++ b/extraconfig/tasks/major_upgrade_object_storage.sh
+@@ -26,6 +26,8 @@ function systemctl_swift {
+ systemctl_swift stop
+
+ yum -y install python-zaqarclient  # needed for os-collect-config
++yum -y install yum-plugin-versionlock
++yum versionlock openvswitch
+ yum -y update
+
+ systemctl_swift start
+diff --git a/extraconfig/tasks/yum_update.sh b/extraconfig/tasks/yum_update.sh
+index b045e5e..409e8cf 100755
+--- a/extraconfig/tasks/yum_update.sh
++++ b/extraconfig/tasks/yum_update.sh
+@@ -1,5 +1,7 @@
+ #!/bin/bash
+
++set -x
++
+ # A heat-config-script which runs yum update during a stack-update.
+ # Inputs:
+ #   deploy_action - yum will only be run if this is UPDATE
+diff --git a/extraconfig/tasks/major_upgrade_ceph_storage.sh b/extraconfig/tasks/major_upgrade_ceph_storage.sh
+index 03a1c1c..dc80a72 100644
+diff --git a/environments/major-upgrade-ceilometer-wsgi-mitaka-newton.yaml b/environments/major-upgrade-ceilometer-wsgi-mitaka-newton.yaml
+new file mode 100644
+index 0000000..6798c25
+--- /dev/null
++++ b/environments/major-upgrade-ceilometer-wsgi-mitaka-newton.yaml
+@@ -0,0 +1,7 @@
++resource_registry:
++
++  # This initiates the upgrades for ceilometer api to run under apache wsgi
++  OS::TripleO::Tasks::UpdateWorkflow: ../extraconfig/tasks/major_upgrade_ceilometer_wsgi_mitaka_newton.yaml
++
++  # no-op the rest
++  OS::TripleO::PostDeploySteps: OS::Heat::None
+diff --git a/extraconfig/tasks/major_upgrade_ceilometer_wsgi_mitaka_newton.yaml b/extraconfig/tasks/major_upgrade_ceilometer_wsgi_mitaka_newton.yaml
+new file mode 100644
+index 0000000..1f3d09e
+--- /dev/null
++++ b/extraconfig/tasks/major_upgrade_ceilometer_wsgi_mitaka_newton.yaml
+@@ -0,0 +1,62 @@
++heat_template_version: 2014-10-16
++
++description: >
++  Software-config for ceilometer configuration under httpd during upgrades
++
++parameters:
++  servers:
++    type: json
++  input_values:
++    type: json
++    description: input values for the software deployments
++resources:
++  CeilometerWsgiMitakaNewtonPreUpgradeConfig:
++    type: OS::Heat::SoftwareConfig
++    properties:
++      group: puppet
++      config:
++        get_file: mitaka_to_newton_ceilometer_wsgi_upgrade.pp
++
++  CeilometerWsgiMitakaNewtonUpgradeConfig:
++    type: OS::Heat::SoftwareConfig
++    properties:
++      group: script
++      config:
++        list_join:
++          - ''
++          - - "#!/bin/bash\n\nset -e\n\n"
++            - get_file: pacemaker_common_functions.sh
++            - get_file: major_upgrade_pacemaker_migrations.sh
++            - "disable_standalone_ceilometer_api\n\n"
++
++  CeilometerWsgiMitakaNewtonPostUpgradeConfig:
++    type: OS::Heat::SoftwareConfig
++    properties:
++      group: script
++      config: |
++        #!/bin/bash
++        set -e
++        /usr/bin/systemctl reload httpd
++
++  CeilometerWsgiMitakaNewtonPreUpgradeDeployment:
++    type: OS::Heat::SoftwareDeploymentGroup
++    properties:
++      name: CeilometerWsgiMitakaNewtonPreUpgradeDeployment
++      servers: {get_param: servers, Controller}
++      config: {get_resource: CeilometerWsgiMitakaNewtonPreUpgradeConfig}
++
++  CeilometerWsgiMitakaNewtonUpgradeConfigDeployment:
++    type: OS::Heat::SoftwareDeploymentGroup
++    depends_on: CeilometerWsgiMitakaNewtonPreUpgradeDeployment
++    properties:
++      name: CeilometerWsgiMitakaNewtonUpgradeConfigDeployment
++      servers: {get_param: servers, Controller}
++      config: {get_resource: CeilometerWsgiMitakaNewtonUpgradeConfig}
++
++  CeilometerWsgiMitakaNewtonPostUpgradeDeployment:
++    type: OS::Heat::SoftwareDeploymentGroup
++    depends_on: CeilometerWsgiMitakaNewtonUpgradeConfigDeployment
++    properties:
++      name: CeilometerWsgiMitakaNewtonPostUpgradeDeployment
++      servers: {get_param: servers, Controller}
++      config: {get_resource: CeilometerWsgiMitakaNewtonPostUpgradeConfig}
+diff --git a/extraconfig/tasks/mitaka_to_newton_ceilometer_wsgi_upgrade.pp b/extraconfig/tasks/mitaka_to_newton_ceilometer_wsgi_upgrade.pp
+new file mode 100644
+index 0000000..056689b
+--- /dev/null
++++ b/extraconfig/tasks/mitaka_to_newton_ceilometer_wsgi_upgrade.pp
+@@ -0,0 +1,62 @@
++# Copyright 2015 Red Hat, Inc.
++# All Rights Reserved.
++#
++# Licensed under the Apache License, Version 2.0 (the "License"); you may
++# not use this file except in compliance with the License. You may obtain
++# a copy of the License at
++#
++#     http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
++# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
++# License for the specific language governing permissions and limitations
++# under the License.
++
++# This puppet manifest is to be used only during a Liberty->Mitaka upgrade
++# It configures keystone to be run under httpd but it makes sure to not
++# restart any services. This snippet needs to be called after the
++# major-upgrade-pacemaker-init.yaml step because that pushes new hiera data
++# on the nodes and before the major-upgrade-pacemaker.yaml
++
++Service <|
++  tag == 'ceilometer-service'
++|> {
++  hasrestart => true,
++  restart    => '/bin/true',
++  start      => '/bin/true',
++  stop       => '/bin/true',
++}
++
++if $::hostname == downcase(hiera('bootstrap_nodeid')) {
++  $pacemaker_master = true
++  $sync_db = true
++} else {
++  $pacemaker_master = false
++  $sync_db = false
++}
++
++include ::tripleo::packages
++
++class { '::ceilometer':
++  sync_db => $sync_db,
++}
++
++include ::ceilometer::config
++
++class { '::ceilometer::api':
++  enabled      => true,
++  service_name => 'httpd',
++}
++
++class { '::apache' :
++  service_enable  => false,
++  service_manage  => true,
++  service_restart => '/bin/true',
++  purge_configs   => false,
++  purge_vhost_dir => false,
++}
++
++class { '::ceilometer::wsgi::apache':
++  ssl => false,
++}
+      
