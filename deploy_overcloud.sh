@@ -31,6 +31,7 @@ ENDOFCAT
 
 fi
 
+#vlan10 on undercloud
 vlan10file=/etc/sysconfig/network-scripts/ifcfg-vlan10
 if ! [[ -e $vlan10file  ]]; then
     echo "no vlan10 iface defining"
@@ -51,6 +52,22 @@ ENDOFCAT
 sudo mv temp_vlan10file $vlan10file
 sudo ifup vlan10
 fi
+
+
+
+#swap space on overcloud:
+firstboot_swapfile=/home/stack/firstboot_swap.yaml
+if ! [[ -e $firstboot_swapfile ]]; then
+    curl -O "https://raw.githubusercontent.com/marios/tools/master/firstboot_swap.yaml" -o $firstboot_swapfile
+fi
+
+cat << EOF > enable_swap.yaml
+resource_registry:
+  OS::TripleO::NodeUserData: $firstboot_swapfile
+EOF
+
+
+
 
 echo "going to deploy like this $deploy_cmd"
 echo "network env like"
