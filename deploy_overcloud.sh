@@ -14,6 +14,24 @@ fi
 
 deploy_cmd="openstack overcloud deploy --templates $THT_ROOT -e $THT_ROOT/overcloud-resource-registry-puppet.yaml -e $THT_ROOT/environments/puppet-pacemaker.yaml  --control-scale 3 --compute-scale 1 --libvirt-type qemu -e $THT_ROOT/environments/network-isolation.yaml -e $THT_ROOT/environments/net-single-nic-with-vlans.yaml -e network_env.yaml --ntp-server '0.fedora.pool.ntp.org'"
 
+# newton and swift node
+#deploy_cmd="openstack overcloud deploy --templates $THT_ROOT -e $THT_ROOT/overcloud-resource-registry-puppet.j2.yaml -e $THT_ROOT/environments/puppet-pacemaker.yaml  --control-scale 3 --compute-scale 1 --libvirt-type qemu --swift-storage-scale 1 -e $THT_ROOT/environments/network-isolation.yaml -e $THT_ROOT/environments/net-single-nic-with-vlans.yaml -e network_env.yaml --ntp-server '0.fedora.pool.ntp.org'"
+
+if ! [[ -e network_env.yaml ]]; then
+    echo "writing network_env.yaml, didn't exist:"
+
+cat > network_env.yaml <<ENDOFCAT
+parameter_defaults:
+  ControlPlaneSubnetCidr: "24"
+  ControlPlaneDefaultRoute: 192.0.2.1
+  EC2MetadataIp:  192.0.2.1
+  DnsServers: ["192.168.122.1"]
+
+ENDOFCAT
+
+fi
+
+
 echo "going to deploy like this $deploy_cmd"
 echo "network env like"
 cat ~/network_env.yaml
