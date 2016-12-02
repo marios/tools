@@ -81,6 +81,5 @@ echo "started $deploy_cmd at `date`" > ~/deploy_time
 source ~/stackrc
 $deploy_cmd
 echo "OK DONE at  `date`" >> ~/deploy_time
-alias pingtest=" if ! [[ -d ~/tripleo-ci ]]; then git clone http://github.com/openstack-infra/tripleo-ci.git ~/tripleo-ci ;fi; ~/tripleo-ci/scripts/tripleo.sh --overcloud-pingtest"
-echo "aliased pingtest "
+echo 'alias pingtest=" if ! [[ -d ~/tripleo-ci ]]; then git clone http://github.com/openstack-infra/tripleo-ci.git ~/tripleo-ci ;fi; ~/tripleo-ci/scripts/tripleo.sh --overcloud-pingtest"'
 
