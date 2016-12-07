@@ -3,6 +3,7 @@
 directory=$1
 if [[ -z $directory ]]; then
         echo "gimme the root dir"
+        ls -l /home/
         exit 1
 fi
 echo "ARE YOU SURE!?"
