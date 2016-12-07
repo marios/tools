@@ -29,7 +29,10 @@ sleep 30
 echo "copy the overcloud deploy script to the new undercloud"
 
 undercloud_ip=$(virsh domifaddr instack | grep 192.168 | awk '{print $4}' | sed 's/\/.*$//g')
-scp ~/scripts/deploy_overcloud.sh root@$undercloud_ip:/home/stack/
+# refresh the overcloud.sh script:
+rm -rf deploy_overcloud.sh
+curl -O "https://raw.githubusercontent.com/marios/tools/master/deploy_overcloud.sh"
+scp deploy_overcloud.sh root@$undercloud_ip:/home/stack/
 ssh root@$undercloud_ip "chown stack:stack /home/stack/deploy_overcloud.sh; chmod 754 /home/stack/deploy_overcloud.sh"
 echo "undercloud is at $undercloud_ip - ssh root@$undercloud_ip"
 
