@@ -1,0 +1,91 @@
+From 67f94130d3da18dacec64509bee6313c07b34656 Mon Sep 17 00:00:00 2001
+From: marios <marios@redhat.com>
+Date: Tue, 10 Jan 2017 13:47:00 +0200
+Subject: [PATCH] Add disable_upgrade_deployment flag to roles_data.yaml
+
+As part of the composable upgrades current plan is to disable
+the composable upgrades steps running on a particular role
+(e.g. all compute nodes) in favor of a later operator driven
+upgrades process as has previously been the case
+
+This adds the disable_upgrade_deployment flag to roles_data as
+a first step. Thanks to shardy for his help with this.
+
+Change-Id: Ice845742a043b34917e61f662885786c73e955fd
+---
+
+diff --git a/puppet/major_upgrade_steps.j2.yaml b/puppet/major_upgrade_steps.j2.yaml
+index b70f5c7..9ae02c7 100644
+--- a/puppet/major_upgrade_steps.j2.yaml
++++ b/puppet/major_upgrade_steps.j2.yaml
+@@ -31,19 +31,23 @@
+   {% if step > 0 %}
+     depends_on:
+       {% for dep in roles %}
++        {% if not dep.disable_upgrade_deployment|default(false) %}
+       - {{dep.name}}Upgrade_Step{{step -1}}
++        {% endif %}
+       {% endfor %}
+   {% endif %}
+     properties:
+       UpgradeStepConfig: {get_param: [role_data, {{role.name}}, upgrade_tasks]}
+       step: {{step}}
+-
++  {% if not role.disable_upgrade_deployment|default(false) %}
+   {{role.name}}Upgrade_Step{{step}}:
+     type: OS::Heat::StructuredDeploymentGroup
+   {% if step > 0 %}
+     depends_on:
+       {% for dep in roles %}
++        {% if not dep.disable_upgrade_deployment|default(false) %}
+       - {{dep.name}}Upgrade_Step{{step -1}}
++        {% endif %}
+       {% endfor %}
+   {% endif %}
+     properties:
+@@ -53,6 +57,7 @@
+       input_values:
+         role: {{role.name}}
+         update_identifier: {get_param: UpdateIdentifier}
++  {% endif %}
+   {% endfor %}
+ {% endfor %}
+
+diff --git a/roles_data.yaml b/roles_data.yaml
+index 63126dc..2476e98 100644
+--- a/roles_data.yaml
++++ b/roles_data.yaml
+@@ -17,6 +17,9 @@
+ # disable_constraints: (boolean) optional, whether to disable Nova and Glance
+ # constraints for each role specified in the templates.
+ #
++# disable_upgrade_deployment: (boolean) optional, whether to run the composable upgrade
++# steps for all services that are deployed on the particular role.
++#
+ # ServicesDefault: (list) optional default list of services to be deployed
+ # on the role, defaults to an empty list. Sets the default for the
+ # {{role.name}}Services parameter in overcloud.yaml
+@@ -105,6 +108,7 @@
+ - name: Compute
+   CountDefault: 1
+   HostnameFormatDefault: '%stackname%-novacompute-%index%'
++  disable_upgrade_deployment: True
+   ServicesDefault:
+     - OS::TripleO::Services::CACerts
+     - OS::TripleO::Services::CephClient
+@@ -141,6 +145,7 @@
+     - OS::TripleO::Services::FluentdClient
+
+ - name: ObjectStorage
++  disable_upgrade_deployment: True
+   ServicesDefault:
+     - OS::TripleO::Services::CACerts
+     - OS::TripleO::Services::Kernel
+@@ -155,6 +160,7 @@
+     - OS::TripleO::Services::FluentdClient
+
+ - name: CephStorage
++  disable_upgrade_deployment: True
+   ServicesDefault:
+     - OS::TripleO::Services::CACerts
+     - OS::TripleO::Services::CephOSD
