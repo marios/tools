@@ -14,11 +14,9 @@ fi
 echo "deleting all vms"
 for i in $(virsh list | grep -v "Id" | awk '{print $2}'); do virsh destroy $i; done
 virsh list --all
-echo "copying images"
-sudo rm -rf /home/vm_storage_pool/baremetalbrbm_*
-sudo cp /home/$directory/baremetalbrbm_* /home/vm_storage_pool/
-sudo rm -rf /var/lib/libvirt/images/instack.qcow2
-sudo cp /home/$directory/instack.qcow2 /var/lib/libvirt/images/instack.qcow2
+echo "deleting current instack.qcow2 and copying image from $directory"
+sudo rm -rfv /var/lib/libvirt/images/instack.qcow2
+sudo cp -v /home/$directory/instack.qcow2 /var/lib/libvirt/images/instack.qcow2
 echo "starting the undercloud"
 virsh start instack
 virsh list
