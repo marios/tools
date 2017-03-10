@@ -12,10 +12,13 @@ if [[ -z $(cat /proc/swaps | grep -v Filename) ]]; then
   cat /proc/swaps
 fi
 
-deploy_cmd="openstack overcloud deploy --templates $THT_ROOT -e $THT_ROOT/overcloud-resource-registry-puppet.yaml -e $THT_ROOT/environments/puppet-pacemaker.yaml  --control-scale 3 --compute-scale 1 --libvirt-type qemu -e $THT_ROOT/environments/network-isolation.yaml -e $THT_ROOT/environments/net-single-nic-with-vlans.yaml -e network_env.yaml --ntp-server '0.fedora.pool.ntp.org' -e enable_swap.yaml"
+#deploy_cmd="openstack overcloud deploy --templates $THT_ROOT -e $THT_ROOT/overcloud-resource-registry-puppet.yaml -e $THT_ROOT/environments/puppet-pacemaker.yaml  --control-scale 3 --compute-scale 1 --libvirt-type qemu -e $THT_ROOT/environments/network-isolation.yaml -e $THT_ROOT/environments/net-single-nic-with-vlans.yaml -e network_env.yaml --ntp-server '0.fedora.pool.ntp.org' -e enable_swap.yaml"
 
-# newton and swift node
+# BEAKERBOX
 #deploy_cmd="openstack overcloud deploy --templates $THT_ROOT -e $THT_ROOT/environments/puppet-pacemaker.yaml  --control-scale 3 --compute-scale 1 --libvirt-type qemu --swift-storage-scale 1 -e $THT_ROOT/environments/network-isolation.yaml -e $THT_ROOT/environments/net-single-nic-with-vlans.yaml -e network_env.yaml -e enable_swap.yaml --ntp-server '0.fedora.pool.ntp.org'"
+
+#LOCALBOX
+deploy_cmd="openstack overcloud deploy --templates $THT_ROOT -e $THT_ROOT/environments/puppet-pacemaker.yaml  --control-scale 3 --compute-scale 1 --libvirt-type qemu -e $THT_ROOT/environments/network-isolation.yaml -e $THT_ROOT/environments/net-single-nic-with-vlans.yaml -e network_env.yaml -e enable_swap.yaml --ntp-server '0.fedora.pool.ntp.org'"
 
 if ! [[ -e network_env.yaml ]]; then
     echo "writing network_env.yaml, didn't exist:"
