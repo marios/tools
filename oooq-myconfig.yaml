@@ -1,0 +1,36 @@
+compute_memory: 6144
+control_memory: 8192
+undercloud_memory: 8192
+undercloud_vcpu: 2
+default_vcpu: 1
+node_count: 5
+overcloud_nodes:
+  - name: control_0
+    flavor: control
+    virtualbmc_port: 6230
+  - name: control_1
+    flavor: control
+    virtualbmc_port: 6231
+  - name: control_2
+    flavor: control
+    virtualbmc_port: 6232
+  - name: compute_0
+    flavor: compute
+    virtualbmc_port: 6233
+  - name: objectstorage_0
+    flavor: objectstorage
+    virtualbmc_port: 6234
+
+topology: >-
+  --control-scale 3
+  --compute-scale 1
+  --object-storage-scale 1
+
+extra_args: >-
+  --libvirt-type qemu
+  -e /usr/share/openstack-tripleo-heat-templates/environments/puppet-pacemaker.yaml
+  --ntp-server pool.ntp.org
+
+run_tempest: false
+enable_pacemaker: true
+
