@@ -1,9 +1,6 @@
 compute_memory: 6144
 control_memory: 8192
-default_disk: 40
-undercloud_memory: 8192
-undercloud_vcpu: 2
-default_vcpu: 1
+objectstorage_memory: 6144
 node_count: 5
 overcloud_nodes:
   - name: control_0
