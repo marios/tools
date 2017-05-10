@@ -1,9 +1,9 @@
-compute_memory: 6144
+compute_memory: 7168
 control_memory: 8192
-default_disk: 40
-undercloud_memory: 8192
-undercloud_vcpu: 2
+objectstorage_memory: 7168
 default_vcpu: 1
+undercloud_vcpu: 2
+undercloud_memory: 8192
 node_count: 5
 overcloud_nodes:
   - name: control_0
@@ -30,7 +30,6 @@ topology: >-
 extra_args: >-
   --libvirt-type qemu
   -e /usr/share/openstack-tripleo-heat-templates/environments/puppet-pacemaker.yaml
-  --ntp-server pool.ntp.org
 
 run_tempest: false
 enable_pacemaker: true
